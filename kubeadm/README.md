@@ -11,7 +11,7 @@ Ensure that all instances are in the same Security Group.
 Expose port 6443 in the Security Group to allow worker nodes to join the cluster.
 Expose port 22 in the Security Group to allows SSH access to manage the instance.
 
-# Execute on Both "Master" & "Worker" Nodes
+# Execute on Both "Control Plane" & "Worker" Nodes
 
 Disable Swap: Required for Kubernetes to function correctly.
 ```
@@ -80,7 +80,7 @@ sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
-# Execute ONLY on the "Master" Node
+# Execute ONLY on the "Control Plane" Node
 
 ### Initialize the Cluster:
 
