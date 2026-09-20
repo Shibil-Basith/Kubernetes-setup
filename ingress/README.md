@@ -110,6 +110,39 @@ spec:
             port:
               number: 80
 ```
+### ingress.yml (to load css and js properly):
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: testing-ingress
+  namespace: testing
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+
+  rules:
+  - http:
+      paths:
+
+      - path: /app1(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: app1-svc
+            port:
+              number: 80
+
+      - path: /app2(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: app2-svc
+            port:
+              number: 80
+```
 
 ### Apply the ingress:
 ```
