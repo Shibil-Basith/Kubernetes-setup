@@ -1,171 +1,186 @@
-## Install Nginx Ingress Controller
+Basic Kubernetes Ingress Example (kubeadm)
+A beginner-friendly, path-based Ingress example for a kubeadm cluster
+using the community NGINX Ingress Controller.
+Architecture
+``` text
+Browser
+  |
+  | http://<NODE-IP>:<NODEPORT>/nginx
+  v
+NGINX Ingress Controller
+  |
+  +--- /nginx  ---> nginx-svc  ---> NGINX Pods
+  |
+  +--- /apache ---> apache-svc ---> Apache Pods
 ```
-kubectl apply -f https://kind.sigs.k8s.io/examples/ingress/deploy-ingress-nginx.yaml
+URL path    Destination
+---
+`/nginx`    NGINX application
+`/apache`   Apache application
+1. Install NGINX Ingress Controller
+If the controller is already installed, skip this step.
+> This example uses the community ingress-nginx controller's bare-metal
+> provider manifest.
+``` bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.1/deploy/static/provider/baremetal/deploy.yaml
 ```
-
-## Create Nginx Deployments with Custom Content
-### app1.yml:
+Check the controller and its Service:
+``` bash
+kubectl get pods -n ingress-nginx
+kubectl get svc -n ingress-nginx
 ```
+Note the HTTP NodePort shown for `ingress-nginx-controller`. The
+assigned port may vary.
+2. Create the applications and Services
+Create a file named `apps.yaml`:
+``` yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app1
+  name: nginx-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: app1
+      app: nginx
   template:
     metadata:
       labels:
-        app: app1
+        app: nginx
     spec:
       containers:
-      - name: app1
-        image: hashicorp/http-echo
-        args:
-        - "-text=Hello from App 1"
-        ports:
-        - containerPort: 5678
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: app1-svc
+  name: nginx-svc
 spec:
+  type: ClusterIP
   selector:
-    app: app1
+    app: nginx
   ports:
     - port: 80
-      targetPort: 5678
-```
-
-### app2.yml:
-```
+      targetPort: 80
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app2
+  name: apache-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: app2
+      app: apache
   template:
     metadata:
       labels:
-        app: app2
+        app: apache
     spec:
       containers:
-      - name: app2
-        image: hashicorp/http-echo
-        args:
-        - "-text=Hello from App 2"
-        ports:
-        - containerPort: 5678
+        - name: apache
+          image: httpd:latest
+          ports:
+            - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: app2-svc
+  name: apache-svc
 spec:
+  type: ClusterIP
   selector:
-    app: app2
+    app: apache
   ports:
     - port: 80
-      targetPort: 5678
+      targetPort: 80
 ```
-
-### Apply the configurations:
+Apply and verify:
+``` bash
+kubectl apply -f apps.yaml
+kubectl get deployments
+kubectl get pods
+kubectl get svc
 ```
-kubectl apply -f app1.yaml -f app2.yaml
-```
-
-## Create Ingress Rules
-
-### ingress.yml:
-```
+3. Create the Ingress resource
+Create a file named `ingress.yaml`.
+The rewrite annotation strips the `/nginx` or `/apache` prefix before
+forwarding the request to the application.
+``` yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: demo-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  rules:
-  - http:
-      paths:
-      - path: /app1
-        pathType: Prefix
-        backend:
-          service:
-            name: app1-svc
-            port:
-              number: 80
-      - path: /app2
-        pathType: Prefix
-        backend:
-          service:
-            name: app2-svc
-            port:
-              number: 80
-```
-### ingress.yml (to load css and js properly):
-```
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: testing-ingress
-  namespace: testing
+  name: basic-ingress
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
-
   rules:
-  - http:
-      paths:
-
-      - path: /app1(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: app1-svc
-            port:
-              number: 80
-
-      - path: /app2(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: app2-svc
-            port:
-              number: 80
+    - http:
+        paths:
+          - path: /nginx(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
+          - path: /apache(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: apache-svc
+                port:
+                  number: 80
 ```
-
-### Apply the ingress:
-```
-kubectl apply -f ingress.yml
-```
-
-### Get the ingress IP:
-```
+Apply and inspect:
+``` bash
+kubectl apply -f ingress.yaml
 kubectl get ingress
+kubectl describe ingress basic-ingress
 ```
-
-### Access the services:
+4. Find the Ingress NodePort
+``` bash
+kubectl get svc -n ingress-nginx
 ```
-curl http://<INGRESS_IP>/app1
-curl http://<INGRESS_IP>/app2
+Example output (your port may be different):
+``` text
+NAME                       TYPE       PORT(S)
+ingress-nginx-controller   NodePort   80:30080/TCP
 ```
-
-### Check controller logs:
+In this example, the HTTP NodePort is `30080`.
+5. Test the Ingress
+Replace `<NODE-IP>` with the IP address of a node that can receive
+traffic on the NodePort, and replace `30080` if your controller uses a
+different port.
+``` bash
+curl http://<NODE-IP>:30080/nginx
+curl http://<NODE-IP>:30080/apache
 ```
-kubectl logs -n ingress-nginx deploy/ingress-nginx-controller
-```
-
-### Verify endpoints:
-```
-kubectl get endpoints app1-svc app2-svc
-```
+Open the same URLs in a browser:
+`http://<NODE-IP>:30080/nginx`
+`http://<NODE-IP>:30080/apache`
+Expected result:
+`/nginx` displays the NGINX welcome page.
+`/apache` displays the Apache welcome page.
+6. Request flow
+Example request: `/apache`
+The browser sends a request to `/apache`.
+The Ingress Controller matches the path and rewrites it to `/`.
+The controller forwards the request to `apache-svc`.
+The Service routes the request to one of the Apache Pods.
+The Apache Pod returns its welcome page.
+Important notes
+An Ingress resource defines HTTP/HTTPS routing rules; it does not
+handle traffic by itself. An Ingress Controller must be installed
+and running.
+The application Services are `ClusterIP` Services and do not need to
+be exposed directly outside the cluster.
+Ensure the relevant AWS Security Group or host firewall allows
+traffic to the controller's NodePort.
+The Ingress class `nginx` must match the installed controller's
+IngressClass.
