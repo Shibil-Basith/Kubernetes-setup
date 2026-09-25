@@ -1,39 +1,58 @@
-Basic Kubernetes Ingress Example (kubeadm)
-A beginner-friendly, path-based Ingress example for a kubeadm cluster
-using the community NGINX Ingress Controller.
-Architecture
-``` text
-Browser
-  |
-  | http://<NODE-IP>:<NODEPORT>/nginx
-  v
-NGINX Ingress Controller
-  |
-  +--- /nginx  ---> nginx-svc  ---> NGINX Pods
-  |
-  +--- /apache ---> apache-svc ---> Apache Pods
+# Basic Kubernetes Ingress Example (kubeadm)
+
+A beginner-friendly, path-based Ingress example for a kubeadm cluster using the NGINX Ingress Controller.
+
+## Architecture
+
+```text
+                  Browser
+                     |
+                     | http://<NODE-IP>:<NODEPORT>
+                     v
+            NGINX Ingress Controller
+                     |
+           +---------+---------+
+           |                   |
+      /nginx                /apache
+           |                   |
+           v                   v
+       nginx-svc           apache-svc
+           |                   |
+           v                   v
+       NGINX Pods          Apache Pods
 ```
-URL path    Destination
+
+| URL Path | Destination |
+|---|---|
+| `/nginx` | NGINX application |
+| `/apache` | Apache application |
+
 ---
-`/nginx`    NGINX application
-`/apache`   Apache application
-1. Install NGINX Ingress Controller
+
+## 1. Install NGINX Ingress Controller
+
 If the controller is already installed, skip this step.
-> This example uses the community ingress-nginx controller's bare-metal
-> provider manifest.
-``` bash
+
+```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.1/deploy/static/provider/baremetal/deploy.yaml
 ```
-Check the controller and its Service:
-``` bash
+
+Check the controller:
+
+```bash
 kubectl get pods -n ingress-nginx
 kubectl get svc -n ingress-nginx
 ```
-Note the HTTP NodePort shown for `ingress-nginx-controller`. The
-assigned port may vary.
-2. Create the applications and Services
-Create a file named `apps.yaml`:
-``` yaml
+
+Note the HTTP NodePort assigned to `ingress-nginx-controller`.
+
+---
+
+## 2. Create Applications and Services
+
+Create a file named `apps.yaml`.
+
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -98,18 +117,30 @@ spec:
     - port: 80
       targetPort: 80
 ```
-Apply and verify:
-``` bash
+
+Apply the configuration:
+
+```bash
 kubectl apply -f apps.yaml
+```
+
+Verify:
+
+```bash
 kubectl get deployments
 kubectl get pods
 kubectl get svc
 ```
-3. Create the Ingress resource
+
+---
+
+## 3. Create the Ingress Resource
+
 Create a file named `ingress.yaml`.
-The rewrite annotation strips the `/nginx` or `/apache` prefix before
-forwarding the request to the application.
-``` yaml
+
+The rewrite annotation removes the `/nginx` or `/apache` prefix before forwarding the request to the application.
+
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -137,50 +168,88 @@ spec:
                 port:
                   number: 80
 ```
-Apply and inspect:
-``` bash
+
+Apply the configuration:
+
+```bash
 kubectl apply -f ingress.yaml
+```
+
+Verify:
+
+```bash
 kubectl get ingress
 kubectl describe ingress basic-ingress
 ```
-4. Find the Ingress NodePort
-``` bash
+
+---
+
+## 4. Find the Ingress NodePort
+
+```bash
 kubectl get svc -n ingress-nginx
 ```
-Example output (your port may be different):
-``` text
+
+Example output:
+
+```text
 NAME                       TYPE       PORT(S)
 ingress-nginx-controller   NodePort   80:30080/TCP
 ```
+
 In this example, the HTTP NodePort is `30080`.
-5. Test the Ingress
-Replace `<NODE-IP>` with the IP address of a node that can receive
-traffic on the NodePort, and replace `30080` if your controller uses a
-different port.
-``` bash
+
+Your assigned port may be different.
+
+---
+
+## 5. Test the Ingress
+
+Replace `<NODE-IP>` with the IP address of a node that can receive traffic on the NodePort.
+
+### Test NGINX
+
+```bash
 curl http://<NODE-IP>:30080/nginx
+```
+
+### Test Apache
+
+```bash
 curl http://<NODE-IP>:30080/apache
 ```
-Open the same URLs in a browser:
-`http://<NODE-IP>:30080/nginx`
-`http://<NODE-IP>:30080/apache`
-Expected result:
-`/nginx` displays the NGINX welcome page.
-`/apache` displays the Apache welcome page.
-6. Request flow
-Example request: `/apache`
-The browser sends a request to `/apache`.
-The Ingress Controller matches the path and rewrites it to `/`.
-The controller forwards the request to `apache-svc`.
-The Service routes the request to one of the Apache Pods.
-The Apache Pod returns its welcome page.
-Important notes
-An Ingress resource defines HTTP/HTTPS routing rules; it does not
-handle traffic by itself. An Ingress Controller must be installed
-and running.
-The application Services are `ClusterIP` Services and do not need to
-be exposed directly outside the cluster.
-Ensure the relevant AWS Security Group or host firewall allows
-traffic to the controller's NodePort.
-The Ingress class `nginx` must match the installed controller's
-IngressClass.
+
+### Test using a browser
+
+```text
+http://<NODE-IP>:30080/nginx
+http://<NODE-IP>:30080/apache
+```
+
+### Expected results
+
+- `/nginx` displays the NGINX welcome page.
+- `/apache` displays the Apache welcome page.
+
+---
+
+## 6. Request Flow
+
+Example: `http://<NODE-IP>:30080/apache`
+
+1. The browser sends a request to `/apache`.
+2. The Ingress Controller matches the path.
+3. The controller rewrites `/apache` to `/`.
+4. The request is forwarded to `apache-svc`.
+5. The Service routes the request to an Apache Pod.
+6. The Apache Pod returns its welcome page.
+
+---
+
+## Important Notes
+
+- An Ingress resource defines HTTP/HTTPS routing rules. An Ingress Controller must be installed and running to handle the traffic.
+- The application Services are `ClusterIP` Services and do not need to be exposed directly outside the cluster.
+- Ensure the AWS Security Group or host firewall allows traffic to the controller's NodePort.
+- The `ingressClassName: nginx` must match the IngressClass of your installed controller.
+- Replace `30080` with your actual HTTP NodePort.
