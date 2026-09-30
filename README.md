@@ -1,4 +1,4 @@
-# Helm Essentials: Beginner Session Guide 🚀
+# Helm Essentials: Beginner Session Guide
 
 Welcome to the **Helm Essentials** session. This guide explains Helm in simple English, sticks to the core basics, and includes step-by-step practical demos and student exercises.
 
