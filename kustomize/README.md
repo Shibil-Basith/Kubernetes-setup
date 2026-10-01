@@ -1,4 +1,4 @@
-# Kustomize Basics – Beginner Lecture Notes
+# Kustomize Basics
 
 ## 1. What is Kustomize?
 
@@ -1057,34 +1057,6 @@ Recommended teaching order:
 
 ---
 
-# 29. Topics to Learn Later
-
-For a beginner session, the following topics are **not necessary yet**:
-
-```text
-Patches
-JSON patches
-Strategic merge patches
-ConfigMap generators
-Secret generators
-Advanced transformers
-Components
-```
-
-First understand:
-
-```text
-Base
-  +
-Overlay
-  ↓
-Customized Kubernetes YAML
-```
-
-Once this is clear, advanced Kustomize concepts become much easier.
-
----
-
-# 30. Final One-Line Definition
+# 29. Final One-Line Definition
 
 > **Kustomize is a Kubernetes tool that lets us reuse existing YAML files and customize them for different environments without changing the original YAML files.**
