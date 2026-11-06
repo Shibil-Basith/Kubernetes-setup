@@ -1027,9 +1027,7 @@ The common YAML does not need to be copied three times.
 
 ---
 
-# 28. Beginner Session Flow
-
-Recommended teaching order:
+# 28. Session Flow
 
 ```text
 1. What is Kustomize?
