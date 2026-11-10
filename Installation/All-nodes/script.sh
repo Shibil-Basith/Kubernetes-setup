@@ -18,6 +18,7 @@ sudo sysctl --system
 lsmod | grep br_netfilter
 lsmod | grep overlay
 
+
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
