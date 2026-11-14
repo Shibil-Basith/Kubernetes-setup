@@ -1,6 +1,6 @@
 # EFK Stack Demo on Kubernetes Using Helm
 
-A simple Kubernetes logging demo using **Nginx, Elasticsearch, Fluent
+Kubernetes logging demo using **Nginx, Elasticsearch, Fluent
 Bit, and Kibana**.
 
 This guide deploys one Nginx application and uses Helm to install the
