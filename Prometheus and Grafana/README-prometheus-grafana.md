@@ -1,6 +1,6 @@
 # Prometheus and Grafana on Kubernetes Using Helm
 
-A beginner-friendly Kubernetes monitoring demo using **Prometheus,
+Kubernetes monitoring demo using **Prometheus,
 Grafana, and Nginx**.
 
 This guide uses the `kube-prometheus-stack` Helm chart. It installs
