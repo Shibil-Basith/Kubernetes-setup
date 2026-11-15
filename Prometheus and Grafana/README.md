@@ -183,6 +183,7 @@ alertmanager:
   `replicas: 1`                          Runs one Prometheus replica
 
   `alertmanager.enabled`                 Installs Alertmanager
+  
   --------------------------------------------------------------------------
 
 The chart also installs Node Exporter and Kube State Metrics by default.
