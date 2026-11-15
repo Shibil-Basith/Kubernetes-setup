@@ -197,10 +197,10 @@ helm install monitoring prometheus-community/kube-prometheus-stack \
   --version 92.8.0 \
   -n monitoring \
   -f monitoring-values.yaml \
-  --set grafana.adminPassword='ChangeThisPassword!'
+  --set grafana.adminPassword='admin'
 ```
 
-**Important:** Replace `ChangeThisPassword!` with your own password. Do
+**Important:** Replace `admin` with your own password. Do
 not commit a real password or Kubernetes Secret to GitHub.
 
 Check the installation:
